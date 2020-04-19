@@ -7,12 +7,14 @@
 #include "ADC.h"
 
 #define MIN(a,b) ((a) < (b) ? a : b)
+#define MAX(a,b) ((a) > (b) ? a : b)
 
 PadConfiguration PAD_CONF;
 
 PadState PAD_STATE = { 
     .sensorValues = { [0 ... SENSOR_COUNT - 1] = 0 },
-    .buttonsPressed = { [0 ... BUTTON_COUNT - 1] = false }
+    .buttonsPressed = { [0 ... BUTTON_COUNT - 1] = false },
+    .impulseValues = { [0 ... SENSOR_COUNT - 1] = 0 }
 };
 
 typedef struct {
@@ -65,6 +67,16 @@ void Pad_UpdateState(void) {
         // TODO: weight of old value and new value is not configurable for now
         // because division by unknown value means ass performance.
         PAD_STATE.sensorValues[i] = (PAD_STATE.sensorValues[i] + newValues[i]) / 2;
+
+        // Here's where the magic happens. I'm keeping a value that increases with the sensor value
+        // but decreases slowly (not so slowly tbh) until it meets the sensor value
+        if (PAD_STATE.impulseValues[i] <= PAD_STATE.sensorValues[i]) {
+            PAD_STATE.impulseValues[i] = PAD_STATE.sensorValues[i];
+        } else {
+            // fun fact: you can decrement 0 and have this unsigned int underflow giving you
+            // some entertaining hours of pain looking for the problem
+            PAD_STATE.impulseValues[i]--;
+        }
     }
 
     for (int i = 0; i < BUTTON_COUNT; i++) {
@@ -72,7 +84,7 @@ void Pad_UpdateState(void) {
 
         for (int j = 0; j < SENSOR_COUNT; j++) {
             int8_t sensor = INTERNAL_PAD_CONF.buttonToSensorMap[i][j];
-            
+
             if (sensor == -1) {
                 break;
             }
@@ -82,6 +94,29 @@ void Pad_UpdateState(void) {
             }
 
             uint16_t sensorVal = PAD_STATE.sensorValues[sensor];
+            uint16_t impulseVal = PAD_STATE.impulseValues[sensor];
+
+            // This is used for debugging. I'm overwriting the values of unused sensors with
+            // whatever info I want to see in the gui. Have fun with it
+            // PAD_STATE.sensorValues[sensor+4] = impulseVal;
+
+            // dirty af
+            // the smaller this value is the easier it is to untrigger the sensor
+            // with a fast decrease in pressure
+            uint16_t dirtyHack = PAD_CONF.releaseMultiplier;
+
+            uint16_t threshold = MAX(PAD_CONF.sensorThresholds[sensor], impulseVal - dirtyHack);
+
+            if (sensorVal > threshold) {
+                newButtonPressedState = true;
+                break;
+            }
+           /* 
+            *   This block should be rewritten using the new variable threshold
+            *   
+            *   As it is right now, the ReleaseThresholds are being used only to influence
+            *   the variable threshold
+            *
 
             if (PAD_STATE.buttonsPressed[i]) {
                 if (sensorVal > INTERNAL_PAD_CONF.sensorReleaseThresholds[sensor]) {
@@ -94,6 +129,7 @@ void Pad_UpdateState(void) {
                     break;
                 }
             }
+            */
         }
 
         PAD_STATE.buttonsPressed[i] = newButtonPressedState;

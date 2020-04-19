@@ -12,6 +12,7 @@
 
     typedef struct {
         uint16_t sensorValues[SENSOR_COUNT];
+        uint16_t impulseValues[SENSOR_COUNT];
         bool buttonsPressed[BUTTON_COUNT];
     } PadState;
 
