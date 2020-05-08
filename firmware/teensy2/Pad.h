@@ -12,8 +12,10 @@
 
     typedef struct {
         uint16_t sensorValues[SENSOR_COUNT];
-        uint16_t impulseValues[SENSOR_COUNT];
+        uint16_t lastValues[SENSOR_COUNT][12];
+        uint16_t lastValuesIndex;
         bool buttonsPressed[BUTTON_COUNT];
+        bool allowTriggers[BUTTON_COUNT];
     } PadState;
 
     void Pad_Initialize(const PadConfiguration* padConfiguration);

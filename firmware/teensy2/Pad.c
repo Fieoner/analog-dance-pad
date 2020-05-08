@@ -1,3 +1,4 @@
+#include <avr/io.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -8,13 +9,18 @@
 
 #define MIN(a,b) ((a) < (b) ? a : b)
 #define MAX(a,b) ((a) > (b) ? a : b)
+#define LAST_VALUES 12
+#define RETRIGGER_THRESHOLD 50
+#define ALLOW_TRIGGER_THRESHOLD 30
 
 PadConfiguration PAD_CONF;
 
 PadState PAD_STATE = { 
     .sensorValues = { [0 ... SENSOR_COUNT - 1] = 0 },
     .buttonsPressed = { [0 ... BUTTON_COUNT - 1] = false },
-    .impulseValues = { [0 ... SENSOR_COUNT - 1] = 0 }
+    .allowTriggers = { [0 ... SENSOR_COUNT - 1] = false },
+    .lastValues = { [0 ... SENSOR_COUNT - 1] = { [0 ... 11] = 0 } },
+    .lastValuesIndex = 0
 };
 
 typedef struct {
@@ -23,6 +29,15 @@ typedef struct {
 } InternalPadConfiguration;
 
 InternalPadConfiguration INTERNAL_PAD_CONF;
+
+uint16_t LastAVG(uint16_t *arr, uint16_t idx, uint16_t numElements) {
+    uint16_t avg = 0;
+    for (int i = 0; i < numElements; i++) {
+        avg += arr[(idx-i)%LAST_VALUES];
+    }
+    avg = avg / numElements;
+    return avg;
+}
 
 void Pad_UpdateInternalConfiguration(void) {
     for (int i = 0; i < SENSOR_COUNT; i++) {
@@ -49,6 +64,7 @@ void Pad_UpdateInternalConfiguration(void) {
 void Pad_Initialize(const PadConfiguration* padConfiguration) {
     ADC_Init();
     Pad_UpdateConfiguration(padConfiguration);
+    DDRD = 0xFF;
 }
 
 void Pad_UpdateConfiguration(const PadConfiguration* padConfiguration) {
@@ -58,6 +74,7 @@ void Pad_UpdateConfiguration(const PadConfiguration* padConfiguration) {
 
 void Pad_UpdateState(void) {
     uint16_t newValues[SENSOR_COUNT]; 
+    uint16_t lvIndex = ++PAD_STATE.lastValuesIndex % LAST_VALUES;
     
     for (int i = 0; i < SENSOR_COUNT; i++) {
         newValues[i] = ADC_Read(i);
@@ -66,17 +83,17 @@ void Pad_UpdateState(void) {
     for (int i = 0; i < SENSOR_COUNT; i++) {
         // TODO: weight of old value and new value is not configurable for now
         // because division by unknown value means ass performance.
-        PAD_STATE.sensorValues[i] = (PAD_STATE.sensorValues[i] + newValues[i]) / 2;
+        uint16_t newValue = (PAD_STATE.sensorValues[i] + newValues[i]) / 2;
+        PAD_STATE.sensorValues[i] = newValue;
 
-        // Here's where the magic happens. I'm keeping a value that increases with the sensor value
-        // but decreases slowly (not so slowly tbh) until it meets the sensor value
-        if (PAD_STATE.impulseValues[i] <= PAD_STATE.sensorValues[i]) {
-            PAD_STATE.impulseValues[i] = PAD_STATE.sensorValues[i];
-        } else {
-            // fun fact: you can decrement 0 and have this unsigned int underflow giving you
-            // some entertaining hours of pain looking for the problem
-            PAD_STATE.impulseValues[i]--;
-        }
+            // we keep track of the last 12 values for retrigger purposes uwu
+        PAD_STATE.lastValues[i][lvIndex] = newValue;
+
+            // if the previous pressure was below the trigger threshold
+            // and the current pressure is above, (trigger) and set allowTriggers
+            // to false
+        if (PAD_STATE.sensorValues[i] < PAD_CONF.sensorThresholds[i])
+            PAD_STATE.allowTriggers[i] = false;
     }
 
     for (int i = 0; i < BUTTON_COUNT; i++) {
@@ -94,29 +111,42 @@ void Pad_UpdateState(void) {
             }
 
             uint16_t sensorVal = PAD_STATE.sensorValues[sensor];
-            uint16_t impulseVal = PAD_STATE.impulseValues[sensor];
 
-            // This is used for debugging. I'm overwriting the values of unused sensors with
-            // whatever info I want to see in the gui. Have fun with it
-            // PAD_STATE.sensorValues[sensor+4] = impulseVal;
+            uint16_t threshold = PAD_CONF.sensorThresholds[sensor];
+            uint16_t lavg = LastAVG(PAD_STATE.lastValues[sensor], lvIndex, LAST_VALUES);
 
-            // dirty af
-            // the smaller this value is the easier it is to untrigger the sensor
-            // with a fast decrease in pressure
-            uint16_t dirtyHack = PAD_CONF.releaseMultiplier;
+            // DEBUG GOOD
+            //PAD_STATE.sensorValues[5] = LastAVG(PAD_STATE.lastValues[sensor], lvIndex, LAST_VALUES);
 
-            uint16_t threshold = MAX(PAD_CONF.sensorThresholds[sensor], impulseVal - dirtyHack);
 
+            // if the sensor value is above threshold and the value is below
+            // last 12 values avg + allow retrigger threshold we set allow retrigger to true
+            // (foot is on panel but we're not in the middle of a step)
+            //
+            // if sensor is above threshold, allow retrigger is true and sensor value is above
+            // retrigger threshold + 50 we unpress the button and set allow retriggers to false
+            // (a step is happening so we want to unpress the panel and disable retrigger.
+            // on the next polling the panel will be pressed again because the value is still 
+            // over the threshold)
             if (sensorVal > threshold) {
+                if (PAD_STATE.allowTriggers[sensor] == false) {
+                    if (sensorVal - lavg < ALLOW_TRIGGER_THRESHOLD)
+                        PAD_STATE.allowTriggers[sensor] = true;
+                }
+                if (PAD_STATE.allowTriggers[sensor] && sensorVal > lavg + RETRIGGER_THRESHOLD) {
+                    PAD_STATE.allowTriggers[sensor] = false;
+                    newButtonPressedState = false;
+                    break;
+                }
                 newButtonPressedState = true;
                 break;
             }
            /* 
-            *   This block should be rewritten using the new variable threshold
+            *   This block should be rewritten using the new retrigger logic
             *   
-            *   As it is right now, the ReleaseThresholds are being used only to influence
-            *   the variable threshold
+            *   As it is right now, the ReleaseThresholds are useless
             *
+            *   don't @me
 
             if (PAD_STATE.buttonsPressed[i]) {
                 if (sensorVal > INTERNAL_PAD_CONF.sensorReleaseThresholds[sensor]) {
