@@ -1,3 +1,4 @@
+#include <avr/io.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -51,6 +52,7 @@ void Pad_UpdateInternalConfiguration(void) {
 
 void Pad_Initialize(const PadConfigurationV2* padConfiguration) {
     Pad_UpdateConfiguration(padConfiguration);
+    DDRD = 0xFF;
 	ADC_Init();
 }
 

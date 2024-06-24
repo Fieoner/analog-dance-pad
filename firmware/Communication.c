@@ -1,4 +1,6 @@
 #include <stdbool.h>
+#include <string.h>
+#include <avr/io.h>
 
 #include "Config/DancePadConfig.h"
 #include "Communication.h"
@@ -21,6 +23,13 @@ void Communication_WriteInputHIDReport(InputHIDReport* report) {
     for (int i = 0; i < SENSOR_COUNT; i++) {
         report->sensorValues[i] = PAD_STATE.sensorValues[i];
     }
+
+    // turn hardcoded leds on
+    PORTD = 0xFF;
+    if (PAD_STATE.buttonsPressed[0]) PORTD &= ~(1<<2);
+    if (PAD_STATE.buttonsPressed[1]) PORTD &= ~(1<<1);
+    if (PAD_STATE.buttonsPressed[2]) PORTD &= ~(1<<0);
+    if (PAD_STATE.buttonsPressed[3]) PORTD &= ~(1<<3);
 }
 
 void Communication_WriteIdentificationReport(IdentificationFeatureReport* ReportData) {
