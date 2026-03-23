@@ -1,4 +1,5 @@
 import consola from 'consola'
+import { Socket, Server as SocketIOServer } from 'socket.io'
 
 import { ServerEvents, ClientEvents } from '../../common-types/events'
 import { Device } from './driver/Device'
@@ -12,7 +13,7 @@ const INPUT_EVENTS_REQUIRED_FOR_CALIBRATION = 250
 
 interface Params {
   expressApplication: Express.Application
-  socketIOServer: SocketIO.Server
+  socketIOServer: SocketIOServer
   deviceDrivers: DeviceDriver[]
 }
 
@@ -189,7 +190,7 @@ const createServer = (params: Params) => {
     dd.start()
   })
 
-  params.socketIOServer.on('connection', socket => {
+  params.socketIOServer.on('connection', (socket: Socket) => {
     consola.info('New SocketIO connection from', socket.handshake.address)
     socket.emit('devicesUpdated', getDevicesUpdatedEvent())
 

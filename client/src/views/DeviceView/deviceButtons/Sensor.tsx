@@ -130,10 +130,7 @@ const Sensor = React.memo<Props>(
       [device.id, sensor.sensorIndex, serverConnection]
     )
 
-    const [
-      throttledSensorUpdate,
-      cancelThrottledSensorUpdate
-    ] = useDebouncedCallback(handleSensorThresholdUpdate, 100, { maxWait: 250 })
+    const throttledSensorUpdate = useDebouncedCallback(handleSensorThresholdUpdate, 100, { maxWait: 250 })[0]
 
     const bindThumb = useDrag(
       ({ down, xy }) => {
@@ -154,7 +151,6 @@ const Sensor = React.memo<Props>(
           throttledSensorUpdate(newValue, false)
           currentlyDownRef.current = true
         } else {
-          cancelThrottledSensorUpdate()
           setThresholdValue({ value: newValue, immediate: true })
           handleSensorThresholdUpdate(newValue, true)
           currentlyDownRef.current = false

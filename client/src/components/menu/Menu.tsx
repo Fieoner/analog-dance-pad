@@ -85,8 +85,8 @@ const Menu = React.memo<Props>(({ isOpen, children, onClose, position }) => {
 
   return (
     <>
-      <Backdrop style={backdropStyle} onClick={onClose} />
-      <MenuContainer position={position} style={containerStyle}>
+      <Backdrop style={backdropStyle as any} onClick={onClose} />
+      <MenuContainer position={position} style={containerStyle as any}>
         {mountChildren && frozenChildren}
       </MenuContainer>
     </>

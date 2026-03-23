@@ -1,10 +1,10 @@
 import React from 'react'
-import { IconLookup } from '@fortawesome/fontawesome-svg-core'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import styled from 'styled-components'
 
 interface Props {
-  icon: IconLookup
+  icon: IconDefinition | any
   size?: string
   color?: string
   onClick?: () => void

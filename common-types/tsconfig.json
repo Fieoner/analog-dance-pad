@@ -10,7 +10,7 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "strict": true,
-    "target": "es2018",
+    "target": "es2018"
   },
    "include": [
      "*.ts"

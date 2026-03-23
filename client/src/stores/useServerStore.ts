@@ -1,5 +1,5 @@
 import create from 'zustand'
-import produce from 'immer'
+import { produce } from 'immer'
 
 import ServerConnection from '../utils/ServerConnection'
 import { DeviceDescriptionMap } from '../../../common-types/device'
@@ -31,8 +31,8 @@ interface State {
   serverConnections: { [serverAddress: string]: ServerConnection }
 }
 
-const [useServerStore] = create<State>(set => {
-  const setAndProduce = (fn: (draft: State) => void) => set(produce(fn))
+const useServerStore = create<State>(set => {
+  const setAndProduce = (fn: (draft: State) => void) => set((produce as any)(fn))
 
   const connect = (address: string) =>
     setAndProduce(draft => {

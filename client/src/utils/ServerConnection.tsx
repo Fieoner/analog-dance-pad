@@ -1,4 +1,4 @@
-import io from 'socket.io-client'
+import io, { Socket } from 'socket.io-client'
 
 import { ServerEvents, ClientEvents } from '../../../common-types/events'
 
@@ -18,7 +18,7 @@ interface ServerConnectionSettings {
 }
 
 class ServerConnection {
-  private ioSocket: SocketIOClient.Socket
+  private ioSocket: Socket
   private inputEventSubscriptions: SubscriptionManager<DeviceInputData>
   private rateEventSubscriptions: SubscriptionManager<number>
 

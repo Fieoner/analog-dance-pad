@@ -71,10 +71,10 @@ const Calibration = React.memo<Props>(({ isOpen, onCalibrate, onCancel }) => {
   return (
     <>
       <CalibrationBackDrop
-        style={calibrationBackdropStyle}
+        style={calibrationBackdropStyle as any}
         onClick={onCancel}
       />
-      <CalibrationContainer style={calibrationContainerStyle}>
+      <CalibrationContainer style={calibrationContainerStyle as any}>
         <Header>Calibrate all buttons to:</Header>
         <CalibrationButtons>
           {config.calibrationPresets.map((preset, i) => (

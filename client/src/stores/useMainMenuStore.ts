@@ -6,7 +6,7 @@ interface State {
   closeMenu: () => void
 }
 
-const [useMainMenuStore] = create<State>(set => ({
+const useMainMenuStore = create<State>(set => ({
   isMenuOpen: false,
   openMenu: () => set({ isMenuOpen: true }),
   closeMenu: () => set({ isMenuOpen: false })

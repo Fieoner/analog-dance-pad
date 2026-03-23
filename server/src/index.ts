@@ -1,7 +1,7 @@
 import cors from 'cors'
 import express from 'express'
 import { Server as HttpServer } from 'http'
-import SocketIO from 'socket.io'
+import { Server as SocketIOServer } from 'socket.io'
 
 import { Teensy2DeviceDriver } from './driver/teensy2/Teensy2DeviceDriver'
 import createServer from './server'
@@ -10,7 +10,7 @@ import consola from 'consola'
 function start(port: number, host: string) {
   const expressApplication = express()
   const httpServer = new HttpServer(expressApplication)
-  const socketIOServer = SocketIO(httpServer, {
+  const socketIOServer = new SocketIOServer(httpServer, {
     perMessageDeflate: false,
     httpCompression: false,
     pingInterval: 2000,

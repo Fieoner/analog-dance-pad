@@ -1,0 +1,23 @@
+# Docker build context exclusions
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env.local
+.env.*.local
+.DS_Store
+.vscode
+.idea
+dist
+build
+README.md
+*.md
+.github
+.gitlab-ci.yml
+Jenkinsfile
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+.editorconfig
+.eslintignore
+.prettierignore

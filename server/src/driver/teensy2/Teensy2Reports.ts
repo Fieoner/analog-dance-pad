@@ -28,9 +28,9 @@ export interface NameReport {
 export class ReportManager {
   private buttonCount: number
   private sensorCount: number
-  private inputReportParser: Parser<any>
-  private configurationReportParser: Parser<any>
-  private nameReportParser: Parser<any>
+  private inputReportParser: any
+  private configurationReportParser: any
+  private nameReportParser: any
 
   constructor(settings: { buttonCount: number; sensorCount: number }) {
     this.buttonCount = settings.buttonCount
@@ -66,21 +66,7 @@ export class ReportManager {
       })
       .uint8('size')
       .string('name', { length: 'size' })
-	  
-	// this.lightsReportParser = new Parser()
-  //     .uint8('reportId', {
-  //       assert: ReportID.PAD_CONFIGURATION
-  //     })
-  //     .array('sensorThresholds', {
-  //       type: 'uint16le',
-  //       length: this.sensorCount
-  //     })
-  //     .floatle('releaseThreshold')
-  //     .array('sensorToButtonMapping', {
-  //       type: 'int8',
-  //       length: this.sensorCount
-  //     })
-  // }
+  }
 
   private formatButtons = (data: number) => {
     const bitArray = new Array(this.buttonCount)

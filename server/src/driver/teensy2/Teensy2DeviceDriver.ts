@@ -179,10 +179,10 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
   // within same millisecond, because USB spec doesn't allow that. So we battle
   // this by putting all writes and feature report requests to a queue where
   // there will always be at least some milliseconds between events.
-  private sendEventToQueue = async <T>(event: () => Promise<T>): Promise<T> => {
+  private sendEventToQueue = <T,>(event: () => Promise<T>): Promise<T> => {
     const promise = this.sendQueue.add(() => event())
     this.sendQueue.add(() => delay(2))
-    return await promise
+    return promise as Promise<T>
   }
 
   public async updateConfiguration(updates: Partial<DeviceConfiguration>) {

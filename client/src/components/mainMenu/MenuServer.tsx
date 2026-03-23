@@ -65,7 +65,7 @@ const MenuServer = React.memo<Props>(({ server, onDeviceClick }) => {
   return (
     <div>
       <ServerLabel>
-        <FontAwesomeIcon icon={faServer} />
+        <FontAwesomeIcon icon={faServer as any} />
         {server.address}
       </ServerLabel>
 

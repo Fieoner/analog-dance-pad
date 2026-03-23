@@ -1,0 +1,40 @@
+# Analog Dance Pad Server
+# Uses Node 20 LTS with libudev for USB device detection
+
+FROM node:20.20.1-bullseye
+
+WORKDIR /app
+
+# Install system dependencies including libudev for USB detection
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    python3 \
+    libusb-1.0-0-dev \
+    libudev-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files
+COPY server/package*.json ./
+COPY server/tsconfig.json ./
+
+# Install dependencies and build native modules
+RUN npm install --build-from-source
+
+# Copy source code
+COPY server/src ./src
+
+# Copy common-types for TypeScript references
+COPY common-types ../common-types
+
+# Build TypeScript
+RUN npm run build
+
+# Expose port
+EXPOSE 3333
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3333/health', (r) => r.statusCode === 404 || r.statusCode === 200 ? process.exit(0) : process.exit(1))" || exit 1
+
+# Run the application
+CMD ["npm", "start"]

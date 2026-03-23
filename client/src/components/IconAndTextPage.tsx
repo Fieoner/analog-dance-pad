@@ -1,13 +1,13 @@
 import React from 'react'
 import styled from 'styled-components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { IconProp } from '@fortawesome/fontawesome-svg-core'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 
 import scale from '../utils/scale'
 import TopBar from './topBar/TopBar'
 
 interface Props {
-  icon: IconProp
+  icon: IconDefinition | any
   children?: React.ReactNode
 }
 
