@@ -11,17 +11,20 @@ services:
       NODE_ENV: production
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3333/health"]
-      interval: 30s
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3333/', (r) => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
       timeout: 10s
       retries: 3
       start_period: 5s
     networks:
       - adp-network
-    # Optional: for direct USB access, uncomment this:
-    # devices:
-    #   - /dev/bus/usb:/dev/bus/usb
-    # privileged: true
+    # USB/HID device access for dance pad hardware
+    # node-hid requires access to /dev/hidraw* devices
+    volumes:
+      - /dev:/dev
+      - /run/udev:/run/udev:ro
+    device_cgroup_rules:
+      - 'c *:* rmw'
 
   client:
     image: analog-dance-pad:client

@@ -58,7 +58,7 @@ const MenuServer = React.memo<Props>(({ server, onDeviceClick }) => {
 
   const sortedDevices = useMemo(() => {
     if (server.connectionStatus === ServerConnectionStatus.Connected) {
-      return sortBy(Object.values(server.devices), d => d.configuration.name)
+      return sortBy(Object.values(server.devices), (d: any) => d.configuration.name)
     }
   }, [server])
 

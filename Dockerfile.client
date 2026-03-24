@@ -20,7 +20,13 @@ COPY client/public ./public
 # Copy common-types for TypeScript references
 COPY common-types ../common-types
 
+# Build common-types (needed for TypeScript project references)
+RUN cd ../common-types && /app/node_modules/.bin/tsc --build
+
 # Build React app for production
+# Empty REACT_APP_SERVER_ADDRESSES makes the client connect to its own origin,
+# where nginx proxies socket.io to the server container
+ENV REACT_APP_SERVER_ADDRESSES="/"
 RUN npm run build
 
 # Stage 2: Serve
@@ -35,6 +41,13 @@ RUN echo 'server { \
     location / { \
         root /usr/share/nginx/html; \
         try_files $uri /index.html; \
+    } \
+    location /socket.io/ { \
+        proxy_pass http://server:3333/socket.io/; \
+        proxy_http_version 1.1; \
+        proxy_set_header Upgrade $http_upgrade; \
+        proxy_set_header Connection "upgrade"; \
+        proxy_set_header Host $host; \
     } \
     location /api { \
         proxy_pass http://server:3333; \

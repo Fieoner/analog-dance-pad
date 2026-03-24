@@ -1,12 +1,12 @@
 import * as HID from 'node-hid'
-import { PRODUCT_ID, VENDOR_ID } from '../Teensy2DeviceDriver'
+import { KNOWN_DEVICES } from '../Teensy2DeviceDriver'
 import { ReportID } from '../Teensy2Reports'
 
 console.log('Setting Teensy devices to program mode...')
 
 HID.devices().forEach(device => {
   // only known devices
-  if (device.productId !== PRODUCT_ID || device.vendorId !== VENDOR_ID) {
+  if (!KNOWN_DEVICES.some(d => d.vendorId === device.vendorId && d.productId === device.productId)) {
     return
   }
 

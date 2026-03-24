@@ -11,8 +11,13 @@ import { ExtendableEmitter } from '../../util/ExtendableStrictEmitter'
 import delay from '../../util/delay'
 import { clamp } from 'lodash'
 
-export const VENDOR_ID = 0x1209
-export const PRODUCT_ID = 0xB196
+export const KNOWN_DEVICES = [
+  { vendorId: 0x1209, productId: 0xB196 },
+  { vendorId: 0x03EB, productId: 0x204F }
+]
+
+const isKnownDevice = (vendorId: number, productId: number) =>
+  KNOWN_DEVICES.some(d => d.vendorId === vendorId && d.productId === productId)
 
 // in future version, I'd like to device to tell this information
 const SENSOR_COUNT = 12
@@ -245,7 +250,7 @@ export class Teensy2DeviceDriver extends ExtendableEmitter<DeviceDriverEvents>()
   private connectToNewDevices() {
     HID.devices().forEach(device => {
       // only known devices
-      if (device.productId !== PRODUCT_ID || device.vendorId !== VENDOR_ID) {
+      if (!isKnownDevice(device.vendorId, device.productId)) {
         return
       }
 
@@ -278,7 +283,7 @@ export class Teensy2DeviceDriver extends ExtendableEmitter<DeviceDriverEvents>()
 
     // ...and then start monitoring for future changes
     usbDetection.on('add', (device: { vendorId: number; productId: number }) => {
-      if (device.vendorId === VENDOR_ID && device.productId === PRODUCT_ID) {
+      if (isKnownDevice(device.vendorId, device.productId)) {
         consola.info('New Teensy2Driver devices detected, connecting...')
 
         // OSX seems to want to wait a while until it can find the new HID
