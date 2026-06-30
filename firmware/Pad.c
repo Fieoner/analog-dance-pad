@@ -52,7 +52,7 @@ void Pad_UpdateInternalConfiguration(void) {
 
 void Pad_Initialize(const PadConfigurationV2* padConfiguration) {
     Pad_UpdateConfiguration(padConfiguration);
-    DDRD = 0xFF;
+    DDRD |= 0x0F;
 	ADC_Init();
 }
 

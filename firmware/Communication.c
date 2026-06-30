@@ -25,11 +25,13 @@ void Communication_WriteInputHIDReport(InputHIDReport* report) {
     }
 
     // turn hardcoded leds on
-    PORTD = 0xFF;
-    if (PAD_STATE.buttonsPressed[0]) PORTD &= ~(1<<2);
-    if (PAD_STATE.buttonsPressed[1]) PORTD &= ~(1<<1);
-    if (PAD_STATE.buttonsPressed[2]) PORTD &= ~(1<<0);
-    if (PAD_STATE.buttonsPressed[3]) PORTD &= ~(1<<3);
+    PORTD |= 0x0F;
+
+    // 2. Clear individual pins if buttons are pressed
+    if (PAD_STATE.buttonsPressed[0]) PORTD &= ~(1 << 1);
+    if (PAD_STATE.buttonsPressed[1]) PORTD &= ~(1 << 3);
+    if (PAD_STATE.buttonsPressed[2]) PORTD &= ~(1 << 2);
+    if (PAD_STATE.buttonsPressed[3]) PORTD &= ~(1 << 0);
 }
 
 void Communication_WriteIdentificationReport(IdentificationFeatureReport* ReportData) {
